@@ -15,7 +15,7 @@ class BoidModel():
         self.acc = Vector2D()
         self.drag = Vector2D(BOID_DRAG, BOID_DRAG)
         self.perception_radius = 100
-        
+
         # Triangle used to visualize the boid
         self.triangle = DrawableTriangle(10, 60, 0, pos)
 
@@ -29,7 +29,7 @@ class BoidModel():
         position_sum = Vector2D()
         for boid in nearby_boids:
             position_sum += boid.pos
-        
+
         steer = position_sum / len(nearby_boids)
 
         # Move the boid 1% towards the center
@@ -41,11 +41,11 @@ class BoidModel():
         steer = Vector2D()
         if len(nearby_boids) == 0:
             return Vector2D()
-        
+
         for boid in nearby_boids:
             if boid.pos.get_distance(self.pos) < SEPARATION_RANGE:
                 steer -= (boid.pos - self.pos)
-        
+
         return steer
 
     def alignment(self, boids):
@@ -54,12 +54,12 @@ class BoidModel():
         perceived_vel = Vector2D()
         if len(nearby_boids) == 0:
             return Vector2D()
-        
+
         for boid in nearby_boids:
             perceived_vel += boid.vel
-        
+
         perceived_vel_avg = perceived_vel / len(nearby_boids)
-        return (perceived_vel_avg - self.vel) / 10
+        return (perceived_vel_avg - self.vel) / 16
 
     def get_nearby_boids(self, boids):
         # Returns boids within the given boids perception radius
@@ -72,20 +72,18 @@ class BoidModel():
                 nearby.append(boid)
         return nearby
 
-
     def update(self, boids):
-        #self.acc = Vector2D.random() / 10000
-        
         # Apply rules
         v1 = self.coherence(boids) * COHESION_FACTOR
         v2 = self.separation(boids) * SEPARATION_FACTOR
         v3 = self.alignment(boids) * ALIGNMENT_FACTOR
 
-        self.acc += (v1 + v2 + v3)
+        self.acc = v1 + v2 + v3
         self.vel += (self.acc)
-        
-        self.vel.clamp(1, 5)
+
+        self.vel.clamp(1, 10)
         self.pos += self.vel
+        self.vel -= self.drag
 
         # Handle out of bounds
         if self.pos.x > S_WIDTH:
@@ -99,8 +97,7 @@ class BoidModel():
 
         # Update the triangle component
         self.update_triangle()
-        
-    
+
     def update_triangle(self):
         # Updates the position and rotation of the triangle component
         self.triangle.set_pos(self.pos.get_position())
