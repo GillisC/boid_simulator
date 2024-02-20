@@ -86,17 +86,33 @@ class BoidModel():
         self.vel -= self.drag
 
         # Handle out of bounds
-        if self.pos.x > S_WIDTH:
-            self.pos.x = 0
-        elif self.pos.x < 0:
-            self.pos.x = S_WIDTH
-        if self.pos.y > S_HEIGHT:
-            self.pos.y = 0
-        elif self.pos.y < 0:
-            self.pos.y = S_HEIGHT
-
+        if BOUNDS:
+            self.handle_soft_bounds()
+        else:
+            self.handle_out_of_bounds()
         # Update the triangle component
         self.update_triangle()
+
+    def handle_out_of_bounds(self):
+        if self.pos.x > SIM_WIDTH:
+            self.pos.x = 0
+        elif self.pos.x < 0:
+            self.pos.x = SIM_WIDTH
+        if self.pos.y > WINDOW_HEIGHT:
+            self.pos.y = 0
+        elif self.pos.y < 0:
+            self.pos.y = WINDOW_HEIGHT
+
+    def handle_soft_bounds(self):
+        if self.pos.x < 0:
+            self.vel += Vector2D(5, 0)
+        elif self.pos.x > SIM_WIDTH:
+            self.vel += Vector2D(-5, 0)
+
+        if self.pos.y < 0:
+            self.vel += Vector2D(0, 5)
+        elif self.pos.y > WINDOW_HEIGHT:
+            self.vel += Vector2D(0, -5)
 
     def update_triangle(self):
         # Updates the position and rotation of the triangle component
