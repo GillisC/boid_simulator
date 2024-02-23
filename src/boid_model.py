@@ -1,8 +1,9 @@
+from simulation_settings import SimulationSettings
 from vector2d import Vector2D
 from colors import *
 import pygame
 import random
-from settings import *
+from constants import *
 from tri import DrawableTriangle
 from triangle import getCenter
 import math
@@ -10,11 +11,10 @@ import math
 class BoidModel():
 
     def __init__(self, pos=(0,0)) -> None:
+        self.settings = SimulationSettings()
         self.pos = Vector2D(pos[0], pos[1])
         self.vel = Vector2D(random.randint(-5, 5), random.randint(-5, 5))
         self.acc = Vector2D()
-        self.drag = Vector2D(BOID_DRAG, BOID_DRAG)
-        self.perception_radius = 100
 
         # Triangle used to visualize the boid
         self.triangle = DrawableTriangle(10, 60, 0, pos)
@@ -39,14 +39,15 @@ class BoidModel():
         # Separation, make sure that the boid doesn't collide with its nearby flock
         nearby_boids = self.get_nearby_boids(boids)
         steer = Vector2D()
+
         if len(nearby_boids) == 0:
             return Vector2D()
 
         for boid in nearby_boids:
-            if boid.pos.get_distance(self.pos) < SEPARATION_RANGE:
+            if boid.pos.get_distance(self.pos) < self.settings.get_separation_radius():
                 steer -= (boid.pos - self.pos)
 
-        return steer
+        return steer / 16
 
     def alignment(self, boids):
         # Alignment, Boids try to change their position so it corresponds with the average alignment of its nearby flock
@@ -59,7 +60,7 @@ class BoidModel():
             perceived_vel += boid.vel
 
         perceived_vel_avg = perceived_vel / len(nearby_boids)
-        return (perceived_vel_avg - self.vel) / 16
+        return (perceived_vel_avg - self.vel) / 8
 
     def get_nearby_boids(self, boids):
         # Returns boids within the given boids perception radius
@@ -68,25 +69,28 @@ class BoidModel():
             if boid is self:
                 continue
             distance = self.pos.get_distance(boid.pos)
-            if distance <= BOID_PERCEPTION_RADIUS:
+            if distance <= self.settings.get_boid_perception_radius():
                 nearby.append(boid)
         return nearby
 
     def update(self, boids):
         # Apply rules
-        v1 = self.coherence(boids) * COHESION_FACTOR
-        v2 = self.separation(boids) * SEPARATION_FACTOR
-        v3 = self.alignment(boids) * ALIGNMENT_FACTOR
+        v1 = self.coherence(boids) * self.settings.get_cohesion_factor()
+        v2 = self.separation(boids) * self.settings.get_separation_factor()
+        v3 = self.alignment(boids) * self.settings.get_alignment_factor()
 
         self.acc = v1 + v2 + v3
         self.vel += (self.acc)
 
-        self.vel.clamp(1, 10)
+        self.vel.clamp(1, self.settings.get_max_speed())
         self.pos += self.vel
-        self.vel -= self.drag
+        """ self.vel -= Vector2D(
+            self.vel.x * self.settings.get_boid_drag(),
+            self.vel.y * self.settings.get_boid_drag(),
+        ) """
 
         # Handle out of bounds
-        if BOUNDS:
+        if self.settings.get_bounds():
             self.handle_soft_bounds()
         else:
             self.handle_out_of_bounds()

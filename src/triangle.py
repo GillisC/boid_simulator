@@ -117,7 +117,7 @@ if __name__ == "__main__":
         for event in events:
             if event.type == pygame.QUIT:
                 running = False;
-        
+            
         drawTriangle(screen, triangle, (200,200,200))
         #rotateTriangle(triangle, -1)
         pygame.display.update()
