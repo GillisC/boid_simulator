@@ -96,11 +96,9 @@ class BoidSimulator:
             self.previous_boid_count = self.settings.get_boid_amount()
 
     def update_sliders(self):
+        # Update the settings based on the slider values
         for component in self.components_dict:
-            # print("current component:", component)
-            # print("component is slider = ", component.__class__ == Slider)
-            # print("component is toggle = ", component.__class__ == Toggle)
-            # print(component.__class__)
+
             if component.__class__ == Slider:
                 slider = component
                 textbox = self.components_dict.get(slider)[0]  # Get the textbox
@@ -125,7 +123,7 @@ class BoidSimulator:
         self, surface, component, name: str, start=1, min=0, max=50, step=1, setter=None
     ):
         # Creates a slider and a textbox and stores them in a dictionary
-        # Setter refers to the setter function in which the slider value should be passed
+        # Setter refers to the setter function in which the component value should be passed
         print("Creating component:", component.__class__)
         y_pos = len(self.components_dict.keys()) * 55 + 10
         if component == "slider":
@@ -188,7 +186,7 @@ class BoidSimulator:
             "slider",
             "Cohesion factor:",
             start=self.settings.get_cohesion_factor(),
-            min=0.2,
+            min=0,
             max=10,
             step=0.2,
             setter=self.settings.set_cohesion_factor,
@@ -199,7 +197,7 @@ class BoidSimulator:
             "slider",
             "Separation factor:",
             start=self.settings.get_separation_factor(),
-            min=0.2,
+            min=0,
             max=10,
             step=0.2,
             setter=self.settings.set_separation_factor,
@@ -210,7 +208,7 @@ class BoidSimulator:
             "slider",
             "Alignment factor:",
             start=self.settings.get_alignment_factor(),
-            min=0.2,
+            min=0,
             max=10,
             step=0.2,
             setter=self.settings.set_alignment_factor,
@@ -221,9 +219,9 @@ class BoidSimulator:
             "slider",
             "Separation radius:",
             start=self.settings.get_separation_radius(),
-            min=20,
+            min=0,
             max=200,
-            step=10,
+            step=5,
             setter=self.settings.set_separation_radius,
         )
 
@@ -232,9 +230,9 @@ class BoidSimulator:
             "slider",
             "Perception radius:",
             start=self.settings.get_boid_perception_radius(),
-            min=50,
-            max=500,
-            step=10,
+            min=0,
+            max=200,
+            step=5,
             setter=self.settings.set_boid_perception_radius,
         )
 
@@ -254,7 +252,7 @@ class BoidSimulator:
             "slider",
             "Boid drag:",
             start=self.settings.get_boid_drag(),
-            min=0.1,
+            min=0,
             max=5,
             step=0.1,
             setter=self.settings.set_boid_drag,

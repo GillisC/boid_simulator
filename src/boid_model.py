@@ -78,16 +78,16 @@ class BoidModel():
         v1 = self.coherence(boids) * self.settings.get_cohesion_factor()
         v2 = self.separation(boids) * self.settings.get_separation_factor()
         v3 = self.alignment(boids) * self.settings.get_alignment_factor()
+        v4 = Vector2D.random() * self.settings.get_random_factor()
 
-        self.acc = v1 + v2 + v3
+        self.acc = v1 + v2 + v3 + v4
         self.vel += (self.acc)
 
         self.vel.clamp(1, self.settings.get_max_speed())
         self.pos += self.vel
-        """ self.vel -= Vector2D(
-            self.vel.x * self.settings.get_boid_drag(),
-            self.vel.y * self.settings.get_boid_drag(),
-        ) """
+
+        # Apply drag
+        self.apply_drag()
 
         # Handle out of bounds
         if self.settings.get_bounds():
@@ -96,6 +96,11 @@ class BoidModel():
             self.handle_out_of_bounds()
         # Update the triangle component
         self.update_triangle()
+
+    def apply_drag(self):
+        self.drag = -self.vel
+        self.drag.set_magnitude(self.settings.get_boid_drag())
+        self.vel += self.drag
 
     def handle_out_of_bounds(self):
         if self.pos.x > SIM_WIDTH:

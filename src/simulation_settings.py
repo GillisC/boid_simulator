@@ -6,14 +6,16 @@ class SimulationSettings:
         if not cls.instance:
             cls.instance = super().__new__(cls)
             cls.instance.boid_amount = 100
-            cls.instance.boid_perception_radius = 100
+            cls.instance.boid_perception_radius = 60
             cls.instance.boid_drag = 0.5
             cls.instance.cohesion_factor = 1
             cls.instance.separation_factor = 1
-            cls.instance.separation_radius = 50
+            cls.instance.separation_radius = 20
             cls.instance.alignment_factor = 1
             cls.instance.bounds = True
+            cls.instance.min_spped = 1
             cls.instance.max_speed = 10
+            cls.instance.random_factor = 0.2
         return cls.instance
 
     # Getters
@@ -41,8 +43,14 @@ class SimulationSettings:
     def get_bounds(self) -> bool:
         return self.bounds
 
+    def get_min_speed(self) -> float:
+        return self.min_speed
+
     def get_max_speed(self) -> float:
         return self.max_speed
+
+    def get_random_factor(self) -> float:
+        return self.random_factor
 
     # Setters
     def set_boid_amount(self, boid_amount: int) -> None:
@@ -71,6 +79,12 @@ class SimulationSettings:
 
     def set_max_speed(self, max_speed: float) -> None:
         self.max_speed = max_speed
+
+    def set_min_speed(self, min_speed: float) -> None:
+        self.min_speed = min_speed
+
+    def set_random_factor(self, random_factor: float) -> None:
+        self.random_factor = random_factor
 
 
 if __name__ == "__main__":
