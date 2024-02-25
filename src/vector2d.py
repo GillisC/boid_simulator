@@ -5,8 +5,8 @@ import random
 class Vector2D:
 
     def __init__(self, x=0, y=0) -> None:
-        self.x = x
-        self.y = y
+        self.x: int = x
+        self.y: int = y
 
     def __add__(self, other):
         return Vector2D(self.x + other.x, self.y + other.y)

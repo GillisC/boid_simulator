@@ -8,8 +8,10 @@ import pygame_widgets
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.toggle import Toggle
-
+import concurrent.futures
+import threading
 from simulation_settings import SimulationSettings
+from vector2d import Vector2D
 
 class BoidSimulator:
 
@@ -43,6 +45,19 @@ class BoidSimulator:
             if event.type == pygame.QUIT:
                 self.running = False
 
+            if pygame.mouse.get_pressed()[0]:
+                mouse = BoidModel(pygame.mouse.get_pos())
+                nearby_boids = mouse.get_nearby_boids_by_radius(self.boids, 200)
+                pygame.draw.circle(
+                    self.sim_surface,
+                    (255, 255, 255),
+                    mouse.pos.get_position(),
+                    200,
+                    1,
+                )
+                for boid in nearby_boids:
+                    boid.mouse_down = True
+
     def run(self):
         self.setup()
         while self.running:
@@ -61,6 +76,7 @@ class BoidSimulator:
             self.handle_events(events)
 
             # Update and draw boids
+
             for boid in self.boids:
                 boid.update(self.boids)
                 boid.draw(self.sim_surface)
@@ -171,6 +187,7 @@ class BoidSimulator:
             self.components_dict[checkbox] = [slider_label, setter]
 
     def create_components(self):
+
         self.create_component(
             self.window,
             "slider",
@@ -268,7 +285,6 @@ class BoidSimulator:
             step=1,
             setter=self.settings.set_bounds,
         )
-
 
 if __name__ == "__main__":
     pygame.init()

@@ -6,7 +6,6 @@ import random
 from constants import *
 from tri import DrawableTriangle
 from triangle import getCenter
-import math
 
 class BoidModel():
 
@@ -15,6 +14,8 @@ class BoidModel():
         self.pos = Vector2D(pos[0], pos[1])
         self.vel = Vector2D(random.randint(-5, 5), random.randint(-5, 5))
         self.acc = Vector2D()
+
+        self.mouse_down = False
 
         # Triangle used to visualize the boid
         self.triangle = DrawableTriangle(10, 60, 0, pos)
@@ -73,14 +74,26 @@ class BoidModel():
                 nearby.append(boid)
         return nearby
 
+    def get_nearby_boids_by_radius(self, boids, perception_radius):
+        # Returns boids within the given boids perception radius
+        nearby = []
+        for boid in boids:
+            if boid is self:
+                continue
+            distance = self.pos.get_distance(boid.pos)
+            if distance <= perception_radius:
+                nearby.append(boid)
+        return nearby
+
     def update(self, boids):
         # Apply rules
         v1 = self.coherence(boids) * self.settings.get_cohesion_factor()
         v2 = self.separation(boids) * self.settings.get_separation_factor()
         v3 = self.alignment(boids) * self.settings.get_alignment_factor()
         v4 = Vector2D.random() * self.settings.get_random_factor()
+        v5 = self.move_to_mouse() / 100
 
-        self.acc = v1 + v2 + v3 + v4
+        self.acc = v1 + v2 + v3 + v4 + v5
         self.vel += (self.acc)
 
         self.vel.clamp(1, self.settings.get_max_speed())
@@ -96,6 +109,23 @@ class BoidModel():
             self.handle_out_of_bounds()
         # Update the triangle component
         self.update_triangle()
+
+    def move_to_mouse(self):
+        if self.mouse_down:
+            mouse_vec = self.get_mouse_vec()
+            if (
+                mouse_vec.x > 0
+                and mouse_vec.x < SIM_WIDTH
+                and mouse_vec.y > 0
+                and mouse_vec.y < WINDOW_HEIGHT
+            ):
+                move_vector = mouse_vec - self.pos
+                self.mouse_down = False
+                return move_vector
+            else:
+                return Vector2D()
+        else:
+            return Vector2D()
 
     def apply_drag(self):
         self.drag = -self.vel
@@ -137,4 +167,4 @@ class BoidModel():
     def get_mouse_vec(self):
         mouse_pos = pygame.mouse.get_pos()
         vec = Vector2D(mouse_pos[0], mouse_pos[1])
-        return vec.normalize()
+        return vec

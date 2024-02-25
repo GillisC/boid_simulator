@@ -7,7 +7,7 @@ class SimulationSettings:
             cls.instance = super().__new__(cls)
             cls.instance.boid_amount = 100
             cls.instance.boid_perception_radius = 60
-            cls.instance.boid_drag = 0.5
+            cls.instance.boid_drag = 0.05
             cls.instance.cohesion_factor = 1
             cls.instance.separation_factor = 1
             cls.instance.separation_radius = 20
