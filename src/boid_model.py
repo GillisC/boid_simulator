@@ -1,3 +1,4 @@
+from quadtree import Circle
 from simulation_settings import SimulationSettings
 from vector2d import Vector2D
 from colors import *
@@ -7,14 +8,15 @@ from constants import *
 from tri import DrawableTriangle
 from triangle import getCenter
 
-class BoidModel():
 
-    def __init__(self, pos=(0,0)) -> None:
+class BoidModel:
+
+    def __init__(self, pos=(0, 0)) -> None:
         self.settings = SimulationSettings()
         self.pos = Vector2D(pos[0], pos[1])
         self.vel = Vector2D(random.randint(-5, 5), random.randint(-5, 5))
         self.acc = Vector2D()
-
+        self.temp = 0
         self.mouse_down = False
 
         # Triangle used to visualize the boid
@@ -22,56 +24,54 @@ class BoidModel():
 
     def coherence(self, boids):
         # Coherence, move the boid to the perceived centre of mass of the nearby flock
-        nearby_boids = self.get_nearby_boids(boids)
-        steer = Vector2D()
-        if len(nearby_boids) == 0:
+        if len(boids) == 0:
             return Vector2D()
 
         position_sum = Vector2D()
-        for boid in nearby_boids:
+        for boid in boids:
             position_sum += boid.pos
 
-        steer = position_sum / len(nearby_boids)
+        steer = position_sum / len(boids)
 
         # Move the boid 1% towards the center
         return (steer - self.pos) / 100
 
     def separation(self, boids):
         # Separation, make sure that the boid doesn't collide with its nearby flock
-        nearby_boids = self.get_nearby_boids(boids)
         steer = Vector2D()
 
-        if len(nearby_boids) == 0:
+        if len(boids) == 0:
             return Vector2D()
 
-        for boid in nearby_boids:
+        for boid in boids:
             if boid.pos.get_distance(self.pos) < self.settings.get_separation_radius():
-                steer -= (boid.pos - self.pos)
+                steer -= boid.pos - self.pos
 
         return steer / 16
 
     def alignment(self, boids):
         # Alignment, Boids try to change their position so it corresponds with the average alignment of its nearby flock
-        nearby_boids = self.get_nearby_boids(boids)
         perceived_vel = Vector2D()
-        if len(nearby_boids) == 0:
+        if len(boids) == 0:
             return Vector2D()
 
-        for boid in nearby_boids:
+        for boid in boids:
             perceived_vel += boid.vel
 
-        perceived_vel_avg = perceived_vel / len(nearby_boids)
+        perceived_vel_avg = perceived_vel / len(boids)
         return (perceived_vel_avg - self.vel) / 8
 
-    def get_nearby_boids(self, boids):
+    def get_nearby_boids(self, quadtree):
         # Returns boids within the given boids perception radius
         nearby = []
-        for boid in boids:
-            if boid is self:
+        perception = Circle(
+            self.pos.x, self.pos.y, self.settings.get_boid_perception_radius()
+        )
+        boids = quadtree.query(perception)
+        for datapoint in boids:
+            if datapoint.data is self:
                 continue
-            distance = self.pos.get_distance(boid.pos)
-            if distance <= self.settings.get_boid_perception_radius():
-                nearby.append(boid)
+            nearby.append(datapoint.data)
         return nearby
 
     def get_nearby_boids_by_radius(self, boids, perception_radius):
@@ -85,17 +85,18 @@ class BoidModel():
                 nearby.append(boid)
         return nearby
 
-    def update(self, boids):
+    def update(self, quadtree):
         # Apply rules
-        v1 = self.coherence(boids) * self.settings.get_cohesion_factor()
-        v2 = self.separation(boids) * self.settings.get_separation_factor()
-        v3 = self.alignment(boids) * self.settings.get_alignment_factor()
+        nearby = self.get_nearby_boids(quadtree)
+        v1 = self.coherence(nearby) * self.settings.get_cohesion_factor()
+        v2 = self.separation(nearby) * self.settings.get_separation_factor()
+        v3 = self.alignment(nearby) * self.settings.get_alignment_factor()
         v4 = Vector2D.random() * self.settings.get_random_factor()
         v5 = self.move_to_mouse() / 100
 
         self.acc = v1 + v2 + v3 + v4 + v5
-        self.vel += (self.acc)
-
+        self.vel += self.acc
+        self.temp = self.vel
         self.vel.clamp(1, self.settings.get_max_speed())
         self.pos += self.vel
 
@@ -158,13 +159,30 @@ class BoidModel():
         self.triangle.set_pos(self.pos.get_position())
         center = getCenter(self.triangle.tri)
         center_vec = Vector2D(center[0], center[1])
-        direction = center_vec.look_at(self.vel+center_vec).get_angle()
-        self.triangle.rotate_to_angle(direction, center_vec.x - (self.vel+center_vec).x)
+        direction = center_vec.look_at(self.vel + center_vec).get_angle()
+        self.triangle.rotate_to_angle(
+            direction, center_vec.x - (self.vel + center_vec).x
+        )
 
     def draw(self, surface):
-        self.triangle.draw(surface, BOID_COLOR, debug=False)
+        color = self.map_vel_to_color()
+        self.triangle.draw(surface, color, debug=False)
 
     def get_mouse_vec(self):
         mouse_pos = pygame.mouse.get_pos()
         vec = Vector2D(mouse_pos[0], mouse_pos[1])
         return vec
+
+    def map_vel_to_color(self):
+        norm_x = int((self.vel.normalize().x + 1) * 127.5)
+        norm_y = int((self.vel.normalize().y + 1) * 127.5)
+
+        red = norm_x
+        green = norm_y
+        blue = 0
+
+        red = min(max(red, 0), 255)
+        green = min(max(green, 0), 255)
+        blue = min(max(blue, 0), 255)
+
+        return (red, green, blue)

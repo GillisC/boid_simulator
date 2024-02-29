@@ -12,6 +12,7 @@ import concurrent.futures
 import threading
 from simulation_settings import SimulationSettings
 from vector2d import Vector2D
+from quadtree import Point, QuadTree, Rectangle
 
 class BoidSimulator:
 
@@ -60,11 +61,16 @@ class BoidSimulator:
 
     def run(self):
         self.setup()
+        quadtree = QuadTree(
+            Rectangle(SIM_WIDTH / 2, WINDOW_HEIGHT / 2, SIM_WIDTH, WINDOW_HEIGHT), 4
+        )
         while self.running:
             self.clock.tick(FPS)
 
             self.sim_surface.fill(BACKGROUND)
             self.window.fill(INTERFACE_BACKGROUND)
+
+            quadtree.clear()
 
             # Handle events
             events = pygame.event.get()
@@ -75,10 +81,16 @@ class BoidSimulator:
             # Handle input
             self.handle_events(events)
 
-            # Update and draw boids
-
+            # Update quadtree
             for boid in self.boids:
-                boid.update(self.boids)
+                quadtree.insert(Point(boid.pos.x, boid.pos.y, boid))
+
+            if self.settings.get_debug_state():
+                quadtree.draw(self.sim_surface)
+
+            # Update and draw boids
+            for boid in self.boids:
+                boid.update(quadtree)
                 boid.draw(self.sim_surface)
 
             self.update_sliders()
@@ -140,7 +152,6 @@ class BoidSimulator:
     ):
         # Creates a slider and a textbox and stores them in a dictionary
         # Setter refers to the setter function in which the component value should be passed
-        print("Creating component:", component.__class__)
         y_pos = len(self.components_dict.keys()) * 55 + 10
         if component == "slider":
             print("its a slider")
@@ -169,7 +180,6 @@ class BoidSimulator:
             self.components_dict[slider] = [slider_label, setter]
 
         elif component == "checkbox":
-            print("its a toggle")
             slider_label = TextBox(
                 surface,
                 SIM_WIDTH + 10,
@@ -194,7 +204,7 @@ class BoidSimulator:
             "Boid count:",
             start=self.settings.get_boid_amount(),
             min=0,
-            max=200,
+            max=1000,
             step=1,
             setter=self.settings.set_boid_amount,
         )
@@ -286,6 +296,16 @@ class BoidSimulator:
             setter=self.settings.set_bounds,
         )
 
+        self.create_component(
+            self.window,
+            "checkbox",
+            "Debug:",
+            start=self.settings.get_debug_state(),
+            min=0,
+            max=1,
+            step=1,
+            setter=self.settings.set_debug_state,
+        )
 if __name__ == "__main__":
     pygame.init()
     pygame.display.set_caption("Boid simulator")

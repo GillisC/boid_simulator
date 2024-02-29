@@ -16,6 +16,7 @@ class SimulationSettings:
             cls.instance.min_spped = 1
             cls.instance.max_speed = 10
             cls.instance.random_factor = 0.2
+            cls.instance.is_debug = False
         return cls.instance
 
     # Getters
@@ -52,6 +53,9 @@ class SimulationSettings:
     def get_random_factor(self) -> float:
         return self.random_factor
 
+    def get_debug_state(self) -> bool:
+        return self.is_debug
+
     # Setters
     def set_boid_amount(self, boid_amount: int) -> None:
         self.boid_amount = boid_amount
@@ -85,6 +89,9 @@ class SimulationSettings:
 
     def set_random_factor(self, random_factor: float) -> None:
         self.random_factor = random_factor
+
+    def set_debug_state(self, state: bool) -> None:
+        self.is_debug = state
 
 
 if __name__ == "__main__":
